@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Management System - Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --dark-bg: #1e293b;
+            --card-bg: #ffffff;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .main-container {
+            padding: 2rem 0;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: var(--card-bg);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .direction-card {
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .direction-card.camera-direction {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .direction-card.camera-direction .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .signal-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .signal-red {
+            background: var(--danger-color);
+            box-shadow: 0 0 15px var(--danger-color);
+        }
+        
+        .signal-green {
+            background: var(--success-color);
+            box-shadow: 0 0 15px var(--success-color);
+        }
+        
+        .phase-banner {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.8); }
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-inactive {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            padding: 1rem;
+        }
+        
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+        
+        .icon-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .icon-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .icon-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+        .icon-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            border: none;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.5);
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse-live 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-traffic-light me-2"></i>
+                <strong>Traffic Management System</strong>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <a href="/live" class="btn btn-danger btn-sm">
+                    <i class="fas fa-video me-1"></i>
+                    <span class="live-indicator"></span>
+                    LIVE VIDEO
+                </a>
+                <span class="status-badge" id="system-status">
+                    <i class="fas fa-circle me-1"></i>
+                    <span id="status-text">Connecting...</span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid main-container">
+        <!-- Live Video Promotion Banner -->
+        <div class="alert alert-info alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
+            <h5 class="alert-heading">
+                <i class="fas fa-video me-2"></i>
+                Want to see the live camera feed and intersection simulation?
+            </h5>
+            <p class="mb-2">Click the LIVE VIDEO button above or <a href="/live" class="text-white" style="text-decoration: underline; font-weight: bold;">click here</a> to watch real-time video streams!</p>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <!-- Phase Banner -->
+        <div class="phase-banner">
+            <h3><i class="fas fa-exchange-alt me-2"></i>Current Phase: <span id="current-phase">Loading...</span></h3>
+            <p class="mb-0">Duration: <span id="phase-duration">0</span>s | Signal Changes: <span id="signal-changes">0</span></p>
+        </div>
+
+        <!-- Statistics Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="icon-box icon-primary">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <div class="stat-value text-primary" id="total-detections">0</div>
+                    <div class="stat-label">Total Detections</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="icon-box icon-success">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div class="stat-value text-success" id="avg-speed">--</div>
+                    <div class="stat-label">Processing FPS</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="icon-box icon-warning">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="stat-value text-warning" id="total-changes">0</div>
+                    <div class="stat-label">Signal Changes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="icon-box icon-danger">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="stat-value text-danger" id="camera-detections">0</div>
+                    <div class="stat-label">Camera Detections</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Intersection Grid -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card direction-card">
+                    <h5><i class="fas fa-arrow-up me-2"></i>NORTH</h5>
+                    <div class="stat-value" id="north-vehicles">--</div>
+                    <div class="stat-label">vehicles</div>
+                    <div class="mt-3">
+                        <span class="signal-indicator" id="north-signal"></span>
+                        <span id="north-status">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card direction-card">
+                    <h5><i class="fas fa-arrow-down me-2"></i>SOUTH</h5>
+                    <div class="stat-value" id="south-vehicles">--</div>
+                    <div class="stat-label">vehicles</div>
+                    <div class="mt-3">
+                        <span class="signal-indicator" id="south-signal"></span>
+                        <span id="south-status">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card direction-card">
+                    <h5><i class="fas fa-arrow-right me-2"></i>EAST</h5>
+                    <div class="stat-value" id="east-vehicles">--</div>
+                    <div class="stat-label">vehicles</div>
+                    <div class="mt-3">
+                        <span class="signal-indicator" id="east-signal"></span>
+                        <span id="east-status">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card direction-card camera-direction">
+                    <h5><i class="fas fa-video me-2"></i>WEST - YOUR CAMERA</h5>
+                    <div class="stat-value" id="west-vehicles">--</div>
+                    <div class="stat-label">vehicles detected</div>
+                    <div class="mt-3">
+                        <span class="signal-indicator" id="west-signal"></span>
+                        <span id="west-status">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Detection History</h5>
+                        <div class="chart-container">
+                            <canvas id="detectionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let detectionChart;
+        
+        // Update live data
+        async function updateLiveData() {
+            try {
+                console.log('Fetching live data...');
+                const response = await fetch('/api/live-data');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Live data received:', data);
+                
+                // Update status
+                document.getElementById('status-text').textContent = 'Connected';
+                document.getElementById('system-status').className = 'status-badge status-active';
+                
+                // Update phase
+                document.getElementById('current-phase').textContent = 
+                    data.current_phase ? data.current_phase.replace(/_/g, ' ') : 'Unknown';
+                document.getElementById('phase-duration').textContent = 
+                    data.phase_duration ? Math.round(data.phase_duration) : 0;
+                document.getElementById('signal-changes').textContent = 
+                    data.signal_changes || 0;
+                
+                // Update stats
+                document.getElementById('total-detections').textContent = data.total_detections || 0;
+                
+                if (data.latest_frame_info && data.latest_frame_info.processing_fps) {
+                    document.getElementById('avg-speed').textContent = 
+                        data.latest_frame_info.processing_fps + ' FPS';
+                } else {
+                    document.getElementById('avg-speed').textContent = '-- FPS';
+                }
+                
+                document.getElementById('total-changes').textContent = data.signal_changes || 0;
+                
+                if (data.intersections && data.intersections.West) {
+                    document.getElementById('camera-detections').textContent = 
+                        data.intersections.West.vehicles || 0;
+                }
+                
+                // Update intersections
+                if (data.intersections) {
+                    Object.entries(data.intersections).forEach(([direction, info]) => {
+                        const prefix = direction.toLowerCase();
+                        const vehicleEl = document.getElementById(`${prefix}-vehicles`);
+                        const statusEl = document.getElementById(`${prefix}-status`);
+                        const signalEl = document.getElementById(`${prefix}-signal`);
+                        
+                        if (vehicleEl) vehicleEl.textContent = info.vehicles || 0;
+                        if (statusEl) statusEl.textContent = info.signal || '--';
+                        
+                        if (signalEl && info.signal) {
+                            signalEl.className = `signal-indicator signal-${info.signal.toLowerCase()}`;
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Error loading live data:', error);
+                document.getElementById('status-text').textContent = 'Connection Error';
+                document.getElementById('system-status').className = 'status-badge status-inactive';
+            }
+        }
+        
+        // Update chart
+        async function updateChart() {
+            try {
+                console.log('Fetching chart data...');
+                const response = await fetch('/api/detections');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Chart data received:', data);
+                
+                if (!data || data.length === 0) {
+                    console.log('No chart data available yet');
+                    return;
+                }
+                
+                const ctx = document.getElementById('detectionChart');
+                if (!ctx) {
+                    console.error('Chart canvas not found');
+                    return;
+                }
+                
+                const context = ctx.getContext('2d');
+                
+                if (detectionChart) {
+                    detectionChart.destroy();
+                }
+                
+                const chartData = data.slice(0, 20).reverse();
+                
+                detectionChart = new Chart(context, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.map(d => {
+                            try {
+                                return new Date(d.timestamp).toLocaleTimeString();
+                            } catch (e) {
+                                return '--';
+                            }
+                        }),
+                        datasets: [{
+                            label: 'Vehicle Detections',
+                            data: chartData.map(d => d.vehicle_count || 0),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                console.log('Chart created successfully');
+                
+            } catch (error) {
+                console.error('Chart error:', error);
+            }
+        }
+        
+        // Initialize
+        console.log('Dashboard script loaded');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing dashboard...');
+            
+            // Initial load
+            updateLiveData();
+            updateChart();
+            
+            // Update every second
+            setInterval(updateLiveData, 1000);
+            setInterval(updateChart, 5000);
+            
+            console.log('Dashboard initialized');
+        });
+    </script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

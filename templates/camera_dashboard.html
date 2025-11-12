@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Feed + Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .camera-status { 
+            animation: pulse 2s infinite; 
+            color: #28a745; 
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .detection-count { 
+            font-size: 2.5rem; 
+            font-weight: bold; 
+        }
+        .signal-light {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .signal-red { background-color: #dc3545; }
+        .signal-green { background-color: #28a745; }
+        .camera-direction { 
+            border: 3px solid #007bff; 
+            background: linear-gradient(45deg, #007bff20, transparent);
+        }
+        .live-feed-info {
+            background: rgba(0, 123, 255, 0.1);
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-video camera-status me-2"></i>
+                Camera Feed + Web Dashboard
+            </span>
+            <div class="text-light">
+                <i class="fas fa-circle camera-status me-1"></i>
+                <span id="connection-status">CONNECTING...</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Camera Feed Status -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="alert live-feed-info">
+                    <h5><i class="fas fa-camera me-2"></i>Live Camera Feed Status</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Camera Window:</strong> <span id="camera-window-status">Check desktop</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Latest Detection:</strong> <span id="latest-detection">--</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Processing FPS:</strong> <span id="processing-fps">--</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Frame Time:</strong> <span id="frame-time">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traffic Status Grid -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h6><i class="fas fa-compass me-1"></i>North</h6>
+                    </div>
+                    <div class="card-body text-center p-2">
+                        <div class="detection-count" id="north-vehicles">--</div>
+                        <small>vehicles</small>
+                        <div><span class="signal-light" id="north-signal"></span><span id="north-status">--</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h6><i class="fas fa-compass me-1"></i>South</h6>
+                    </div>
+                    <div class="card-body text-center p-2">
+                        <div class="detection-count" id="south-vehicles">--</div>
+                        <small>vehicles</small>
+                        <div><span class="signal-light" id="south-signal"></span><span id="south-status">--</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h6><i class="fas fa-compass me-1"></i>East</h6>
+                    </div>
+                    <div class="card-body text-center p-2">
+                        <div class="detection-count" id="east-vehicles">--</div>
+                        <small>vehicles</small>
+                        <div><span class="signal-light" id="east-signal"></span><span id="east-status">--</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card camera-direction">
+                    <div class="card-header bg-primary text-white">
+                        <h6><i class="fas fa-video me-1"></i>West - YOUR CAMERA</h6>
+                    </div>
+                    <div class="card-body text-center p-2">
+                        <div class="detection-count text-primary" id="west-vehicles">--</div>
+                        <small>vehicles detected</small>
+                        <div><span class="signal-light" id="west-signal"></span><span id="west-status">--</span></div>
+                        <small id="west-update">--</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Logs -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Your Camera Detection History</h6>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="cameraChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>System Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>Current Phase:</strong><br>
+                            <span id="current-phase-info">--</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Phase Duration:</strong><br>
+                            <span id="phase-duration-info">--</span>s
+                        </div>
+                        <div class="mb-2">
+                            <strong>Total Detections:</strong><br>
+                            <span id="total-detections-info">--</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Signal Changes:</strong><br>
+                            <span id="signal-changes-info">--</span>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <h6>📹 Camera Feed</h6>
+                            <p class="small text-muted">Check the camera window on your desktop to see live vehicle detection with bounding boxes and confidence scores!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cameraChart;
+        
+        async function loadLiveData() {
+            try {
+                const response = await fetch('/api/live-data');
+                const data = await response.json();
+                
+                // Update connection status
+                document.getElementById('connection-status').textContent = 
+                    `LIVE - ${new Date(data.timestamp).toLocaleTimeString()}`;
+                
+                // Update camera feed info
+                const frameInfo = data.latest_frame_info;
+                document.getElementById('latest-detection').textContent = 
+                    `${frameInfo.vehicle_count} vehicles`;
+                document.getElementById('processing-fps').textContent = 
+                    `${frameInfo.processing_fps} FPS`;
+                document.getElementById('frame-time').textContent = 
+                    new Date(frameInfo.timestamp).toLocaleTimeString();
+                
+                // Update intersection data
+                Object.entries(data.intersections).forEach(([direction, info]) => {
+                    const prefix = direction.toLowerCase();
+                    
+                    document.getElementById(`${prefix}-vehicles`).textContent = info.vehicles;
+                    document.getElementById(`${prefix}-status`).textContent = info.signal;
+                    
+                    const signalLight = document.getElementById(`${prefix}-signal`);
+                    signalLight.className = `signal-light signal-${info.signal.toLowerCase()}`;
+                    
+                    if (direction === 'West') {
+                        document.getElementById('west-update').textContent = 
+                            new Date(info.last_update).toLocaleTimeString();
+                    }
+                });
+                
+                // Update system info
+                document.getElementById('current-phase-info').textContent = 
+                    data.current_phase.replace('_', ' ');
+                document.getElementById('phase-duration-info').textContent = 
+                    Math.round(data.phase_duration);
+                document.getElementById('total-detections-info').textContent = 
+                    data.total_detections;
+                document.getElementById('signal-changes-info').textContent = 
+                    data.signal_changes;
+                
+                // Update camera status
+                const cameraStatus = data.camera_status === 'active' ? 
+                    'Camera window open' : 'Camera not available';
+                document.getElementById('camera-window-status').textContent = cameraStatus;
+                
+            } catch (error) {
+                console.error('Error loading live data:', error);
+                document.getElementById('connection-status').textContent = 'CONNECTION ERROR';
+            }
+        }
+        
+        async function loadCameraChart() {
+            try {
+                const response = await fetch('/api/camera-detections');
+                const data = await response.json();
+                
+                if (data.length === 0) return;
+                
+                const ctx = document.getElementById('cameraChart').getContext('2d');
+                
+                if (cameraChart) {
+                    cameraChart.destroy();
+                }
+                
+                const chartData = data.slice(0, 20).reverse();
+                
+                cameraChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.map(d => new Date(d.timestamp).toLocaleTimeString()),
+                        datasets: [{
+                            label: 'Vehicle Detections',
+                            data: chartData.map(d => d.vehicle_count),
+                            borderColor: 'rgb(0, 123, 255)',
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            tension: 0.1,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Vehicles'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Your Camera - Real-Time Detection History'
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading camera chart:', error);
+            }
+        }
+        
+        // Initialize and set up updates
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLiveData();
+            loadCameraChart();
+            
+            // Real-time updates
+            setInterval(loadLiveData, 1000);      // Update every 1 second
+            setInterval(loadCameraChart, 8000);   // Update chart every 8 seconds
+        });
+    </script>
+</body>
+</html>
