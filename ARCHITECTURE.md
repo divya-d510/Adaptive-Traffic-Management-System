@@ -500,85 +500,6 @@ Browser → Flask → Controller → Browser
 
 ---
 
-## Design Decisions
-
-### 1. Why Background Subtraction over Deep Learning?
-
-**Decision:** Use MOG2 background subtraction instead of YOLO/Faster R-CNN
-
-**Rationale:**
-- **Performance:** 30 FPS on CPU vs 10-15 FPS with YOLO
-- **Resource Usage:** Low memory footprint (~200 MB vs 2+ GB)
-- **Simplicity:** No model training or large model files
-- **Accuracy:** Sufficient for stationary camera scenarios
-- **Real-time:** Sub-100ms latency
-
-**Trade-offs:**
-- Less accurate in complex scenarios
-- Requires stationary camera
-- Sensitive to lighting changes
-
-### 2. Why Multi-threading over Multi-processing?
-
-**Decision:** Use threading.Thread instead of multiprocessing.Process
-
-**Rationale:**
-- **Shared Memory:** Easy frame sharing between threads
-- **Lower Overhead:** Thread creation faster than process
-- **Simpler IPC:** No need for queues or pipes
-- **GIL Impact:** Minimal (I/O bound operations)
-
-**Trade-offs:**
-- Limited CPU parallelism due to GIL
-- Shared state requires locks
-
-### 3. Why MJPEG over WebRTC?
-
-**Decision:** Use MJPEG streaming instead of WebRTC
-
-**Rationale:**
-- **Simplicity:** Easy to implement with Flask
-- **Compatibility:** Works in all browsers
-- **No Dependencies:** No additional libraries needed
-- **Sufficient Latency:** <1 second acceptable
-
-**Trade-offs:**
-- Higher bandwidth usage
-- No bidirectional communication
-- Not suitable for ultra-low latency
-
-### 4. Why SQLite over PostgreSQL?
-
-**Decision:** Use SQLite instead of PostgreSQL
-
-**Rationale:**
-- **Zero Configuration:** No server setup required
-- **Portability:** Single file database
-- **Sufficient Performance:** <1000 writes/second
-- **Simplicity:** Perfect for single-machine deployment
-
-**Trade-offs:**
-- No concurrent writes
-- Limited scalability
-- No network access
-
-### 5. Why Flask over FastAPI?
-
-**Decision:** Use Flask instead of FastAPI
-
-**Rationale:**
-- **Maturity:** Well-established ecosystem
-- **Simplicity:** Easy to learn and use
-- **MJPEG Support:** Built-in streaming capabilities
-- **Template Engine:** Jinja2 for HTML rendering
-
-**Trade-offs:**
-- Slower than FastAPI
-- No automatic API documentation
-- No async/await support
-
----
-
 ## Performance Characteristics
 
 ### Latency Breakdown
@@ -658,3 +579,4 @@ Network: 1 MB/s per video stream
 ---
 
 **This architecture supports real-time traffic management with adaptive control, live visualization, and remote monitoring capabilities.**
+
