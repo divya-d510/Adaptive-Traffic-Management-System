@@ -358,11 +358,11 @@ traffic-management-system/
 Contributions are welcome! Areas for improvement:
 
 - [ ] Multiple camera support (4 cameras for all directions)
-- [ ] Deep learning detection (YOLO, SSD)
-- [ ] Turn movement tracking (left, right, straight)
-- [ ] Pedestrian detection and crossings
-- [ ] Emergency vehicle priority
-- [ ] Historical data analysis
+- [x] Deep learning detection (YOLO, SSD)
+- [x] Turn movement tracking (left, right, straight)
+- [x] Pedestrian detection and crossings
+- [x] Emergency vehicle priority
+- [x] Historical data analysis
 - [ ] Mobile app
 - [ ] Cloud deployment options
 
@@ -408,3 +408,4 @@ http://YOUR_IP:5002/live
 ---
 
 **Built with ❤️ for smart traffic management**
+
