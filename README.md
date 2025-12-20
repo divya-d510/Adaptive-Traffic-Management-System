@@ -61,13 +61,13 @@ python run.py
 
 ## 📸 Sample Dashboard Output
 
-### Main Dashboard
-![Main Dashboard](dashboard_screenshots/dashboard_1.png)
-*Real-time statistics, vehicle counts, and detection history charts*
-
 ### Live Video Dashboard
 ![Live Video Dashboard](dashboard_screenshots/dashboard_2.png)
 *Live camera feed and intersection simulation with animated vehicles*
+
+### Main Dashboard
+![Main Dashboard](dashboard_screenshots/dashboard_1.png)
+*Real-time statistics, vehicle counts, and detection history charts*
 
 **Features Shown:**
 - 🎥 Live camera feed with vehicle detection
@@ -408,4 +408,5 @@ http://YOUR_IP:5002/live
 ---
 
 **Built with ❤️ for smart traffic management**
+
 
